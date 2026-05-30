@@ -16,6 +16,10 @@ class Conversation:
     default when None. `system_prompt` encodes the conversation's purpose.
     `response_schema` is a JSON schema for structured-output conversations
     (None for freeform chat).
+
+    `tools` is an opaque list of standard OpenAI/OpenRouter tool definitions.
+    Converse forwards them to the model and relays any resulting tool calls
+    back to the caller without interpretation.
     """
     id: str
     user_id: str
@@ -25,6 +29,7 @@ class Conversation:
     model: Optional[str] = None
     system_prompt: Optional[str] = None
     response_schema: Optional[dict] = None
+    tools: Optional[list] = None
 
     def to_dict(self) -> dict:
         return {
@@ -36,6 +41,7 @@ class Conversation:
             "model": self.model,
             "system_prompt": self.system_prompt,
             "response_schema": self.response_schema,
+            "tools": self.tools,
         }
 
     @classmethod
@@ -49,6 +55,10 @@ class Conversation:
         if "created_at" not in data:
             raise ValueError("created_at is required")
 
+        tools = data.get("tools")
+        if tools is not None and not isinstance(tools, list):
+            raise ValueError("tools must be a JSON array")
+
         return cls(
             id=str(data["id"]),
             user_id=str(data["user_id"]),
@@ -58,4 +68,5 @@ class Conversation:
             model=str(data["model"]) if data.get("model") else None,
             system_prompt=str(data["system_prompt"]) if data.get("system_prompt") else None,
             response_schema=data.get("response_schema"),
+            tools=tools,
         )

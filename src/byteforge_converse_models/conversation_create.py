@@ -10,13 +10,14 @@ class ConversationCreate:
     Distinct from `Conversation` because the server owns `id`, `created_at`,
     and `updated_at`. The consuming app supplies `user_id` and `title`, plus
     optional per-conversation LLM config (`model`, `system_prompt`,
-    `response_schema`).
+    `response_schema`, `tools`).
     """
     user_id: str
     title: str
     model: Optional[str] = None
     system_prompt: Optional[str] = None
     response_schema: Optional[dict] = None
+    tools: Optional[list] = None
 
     def to_dict(self) -> dict:
         return {
@@ -25,6 +26,7 @@ class ConversationCreate:
             "model": self.model,
             "system_prompt": self.system_prompt,
             "response_schema": self.response_schema,
+            "tools": self.tools,
         }
 
     @classmethod
@@ -38,10 +40,15 @@ class ConversationCreate:
         if response_schema is not None and not isinstance(response_schema, dict):
             raise ValueError("response_schema must be a JSON object")
 
+        tools = data.get("tools")
+        if tools is not None and not isinstance(tools, list):
+            raise ValueError("tools must be a JSON array")
+
         return cls(
             user_id=str(data["user_id"]),
             title=str(data["title"]),
             model=str(data["model"]) if data.get("model") else None,
             system_prompt=str(data["system_prompt"]) if data.get("system_prompt") else None,
             response_schema=response_schema,
+            tools=tools,
         )
